@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f5f0">
+    <meta name="description" content="Studiu local de teren și variante de volumetrie pentru arhitecți.">
+    <title>Volumetrie — studio de concept</title>
+    <script>
+      try {
+        const theme = localStorage.getItem("volumetrie.theme.v1");
+        if (theme === "light" || theme === "dark") {
+          document.documentElement.dataset.theme = theme;
+        }
+      } catch (error) {
+        console.error("Theme preference could not be loaded:", error);
+      }
+    </script>
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://tile.openstreetmap.org">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <link rel="stylesheet" href="./styles.css">
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script defer src="./src/domain.js"></script>
+    <script defer src="./src/map.js"></script>
+    <script defer src="./src/main.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#" aria-label="Volumetrie, pagina principală">
+          <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+          <span><strong>atelier</strong><small>VOLUMETRIE</small></span>
+        </a>
+        <div class="workspace-label">STUDIO DE CONCEPT</div>
+        <nav class="step-nav" aria-label="Etapele proiectului">
+          <button class="step-link active" data-step="project" aria-label="Etapa 01: Proiect"><span class="step-number">01</span><span>Proiect</span><span class="step-check"></span></button>
+          <button class="step-link" data-step="site" aria-label="Etapa 02: Teren"><span class="step-number">02</span><span>Teren</span><span class="step-check"></span></button>
+          <button class="step-link" data-step="rules" aria-label="Etapa 03: Reguli"><span class="step-number">03</span><span>Reguli</span><span class="step-check"></span></button>
+          <button class="step-link" data-step="variants" aria-label="Etapa 04: Variante"><span class="step-number">04</span><span>Variante</span><span class="step-check"></span></button>
+        </nav>
+        <div class="sidebar-bottom">
+          <span class="status-dot"></span>
+          <div><strong>Stocare locală</strong><small id="save-status">Proiectul rămâne pe acest dispozitiv</small></div>
+        </div>
+      </aside>
+
+      <main class="main-area">
+        <header class="topbar">
+          <div class="breadcrumb"><span>PROIECTE</span><span class="slash">/</span><strong id="top-project-name">Studiu nou</strong></div>
+          <div class="top-actions">
+            <button class="button button-quiet" id="new-project">Proiect nou</button>
+            <button class="button button-quiet" id="import-project">Importă</button>
+            <button class="button button-dark" id="export-project"><span aria-hidden="true">↗</span> Exportă proiect</button>
+            <button class="button button-quiet theme-toggle" id="theme-toggle" type="button" aria-label="Activează tema întunecată" aria-pressed="false" title="Activează tema întunecată">
+              <span class="theme-icon" aria-hidden="true">☾</span><span class="theme-label">Temă</span>
+            </button>
+            <input id="import-file" type="file" accept=".json,.volumetrie.json,application/json" hidden>
+          </div>
+        </header>
+
+        <div class="content-wrap">
+          <section class="step-panel active" data-panel="project">
+            <div class="page-heading">
+              <div><div class="eyebrow">BINE AI VENIT ÎN STUDIO</div><h1>Începe cu intenția.</h1><p>Definește proiectul și pregătește spațiul de lucru pentru studiul de volumetrie.</p></div>
+              <div class="heading-index">01 <span>/ 04</span></div>
+            </div>
+            <div class="form-card project-card">
+              <div class="card-heading"><div class="icon-box">⌂</div><div><h2>Datele proiectului</h2><p>Informațiile de bază pentru acest studiu.</p></div></div>
+              <label class="field-label" for="project-name">Numele proiectului <span>*</span></label>
+              <input class="text-input" id="project-name" maxlength="100" placeholder="ex. Locuință individuală — Strada Viilor">
+              <label class="field-label" for="project-description">Descriere <span class="optional">OPȚIONAL</span></label>
+              <textarea class="text-input textarea" id="project-description" rows="3" placeholder="Note de concept, client sau context..."></textarea>
+              <div class="form-footer"><span class="quiet-note">Salvarea automată este activă în acest browser.</span><button class="button button-dark next-step" data-next="site">Configurează terenul <span>→</span></button></div>
+            </div>
+            <div class="note-strip"><span class="note-symbol">i</span><span><strong>Local-first, fără cont.</strong> Exportă periodic proiectul pentru a păstra o copie portabilă.</span></div>
+          </section>
+
+          <section class="step-panel" data-panel="site">
+            <div class="page-heading">
+              <div><div class="eyebrow">ETAPA 02 · DEFINIREA AMPLASAMENTULUI</div><h1>Desenează terenul.</h1><p>Plasează punctele de contur pe hartă sau introdu coordonatele manual.</p></div>
+              <div class="heading-index">02 <span>/ 04</span></div>
+            </div>
+            <div class="site-layout">
+              <div class="map-card">
+                <div class="map-toolbar">
+                  <div class="map-title"><span class="map-pin">⌖</span><div><strong>Hartă de amplasament</strong><small>OpenStreetMap · suport orientativ</small></div></div>
+                  <div class="map-actions"><button id="draw-mode" class="button button-draw active">＋ Desenează contur</button><button id="finish-drawing" class="button button-quiet">Finalizează</button><button id="undo-point" class="icon-button" title="Anulează ultimul punct" aria-label="Anulează ultimul punct">↶</button></div>
+                </div>
+                <div id="map" class="map-view" role="application" aria-label="Hartă interactivă pentru desenarea conturului"></div>
+                <div id="map-fallback" class="map-fallback" hidden>Harta nu s-a încărcat. Poți introduce coordonatele în tabelul de mai jos.</div>
+                <div class="map-legend"><span><i class="legend-boundary"></i> Contur teren</span><span><i class="legend-point"></i> Vârfuri editabile</span><span id="map-coordinates">WGS84 · latitudine / longitudine</span></div>
+              </div>
+              <aside class="site-side">
+                <div class="side-card">
+                  <div class="side-card-title"><span>01</span><div><h2>Suprafață de referință</h2><p>Folosită la calculul POT și CUT</p></div></div>
+                  <div class="input-with-unit"><input id="site-area" type="number" min="0.01" step="0.01" placeholder="ex. 500"><span>m²</span></div>
+                  <small class="helper-text">Lasă liber pentru aria estimată din contur.</small>
+                  <div class="area-result"><span>ARIA ESTIMATĂ DIN CONTUR</span><strong id="calculated-area">— m²</strong></div>
+                </div>
+                <div class="side-card">
+                  <div class="side-card-title"><span>02</span><div><h2>Coordonate contur</h2><p id="vertex-count">0 vârfuri · minimum 3</p></div></div>
+                  <div class="coordinate-table-wrap">
+                    <table class="coordinate-table"><thead><tr><th>#</th><th>LATITUDINE</th><th>LONGITUDINE</th><th></th></tr></thead><tbody id="coordinate-rows"></tbody></table>
+                  </div>
+                  <button class="text-button" id="add-coordinate">＋ Adaugă coordonate manual</button>
+                </div>
+                <div class="warning-card"><span>!</span><p>Digitizarea pe hartă este aproximativă. Nu reprezintă ridicare topografică sau limită cadastrală.</p></div>
+              </aside>
+            </div>
+            <div class="step-footer"><button class="button button-quiet previous-step" data-prev="project">← Înapoi</button><button class="button button-dark next-step" data-next="rules">Continuă la reguli <span>→</span></button></div>
+          </section>
+
+          <section class="step-panel" data-panel="rules">
+            <div class="page-heading">
+              <div><div class="eyebrow">ETAPA 03 · PARAMETRII URBANISTICI</div><h1>Stabilește limitele.</h1><p>Introdu indicatorii din documentele de urbanism și retragerile cunoscute.</p></div>
+              <div class="heading-index">03 <span>/ 04</span></div>
+            </div>
+            <div class="rules-layout">
+              <div class="form-card">
+                <div class="card-heading"><div class="icon-box">⌗</div><div><h2>Indicatori urbanistici</h2><p>Valorile sunt introduse și verificate de arhitect.</p></div></div>
+                <div class="field-grid rules-indicators">
+                  <div><label class="field-label" for="pot-max">POT maxim <span class="optional">OPȚIONAL</span></label><div class="input-with-unit"><input id="pot-max" type="number" min="0" max="100" step="0.1" placeholder="ex. 35"><span>%</span></div></div>
+                  <div><label class="field-label" for="cut-max">CUT maxim <span class="optional">OPȚIONAL</span></label><div class="input-with-unit"><input id="cut-max" type="number" min="0" step="0.01" placeholder="ex. 0.9"><span>coef.</span></div></div>
+                  <div><label class="field-label" for="height-max">Înălțime maximă <span class="optional">OPȚIONAL</span></label><div class="input-with-unit"><input id="height-max" type="number" min="0" step="0.1" placeholder="ex. 10"><span>m</span></div></div>
+                </div>
+                <fieldset class="alignment-editor">
+                  <legend class="field-label">Alinierea casei la teren</legend>
+                  <p class="helper-text">N = nord, S = sud, E = est, V = vest; colțurile combină două laturi. Alege maximum două opțiuni. Casa se aliniază paralel la latura selectată, la distanța retragerii variantei.</p>
+                  <div class="alignment-options" id="alignment-options">
+                    <label><input type="checkbox" data-alignment-side="N"><span>N</span></label>
+                    <label><input type="checkbox" data-alignment-side="S"><span>S</span></label>
+                    <label><input type="checkbox" data-alignment-side="E"><span>E</span></label>
+                    <label><input type="checkbox" data-alignment-side="V"><span>V</span></label>
+                    <label><input type="checkbox" data-alignment-side="NE"><span>NE</span></label>
+                    <label><input type="checkbox" data-alignment-side="NV"><span>NV</span></label>
+                    <label><input type="checkbox" data-alignment-side="SE"><span>SE</span></label>
+                    <label><input type="checkbox" data-alignment-side="SV"><span>SV</span></label>
+                  </div>
+                  <small class="helper-text" id="alignment-count">0 din 2 selectate</small>
+                </fieldset>
+                <div class="note-strip compact"><span class="note-symbol">i</span><span>Retragerile N/S/E/V se configurează separat pentru fiecare variantă.</span></div>
+                <label class="field-label" for="rule-source">Sursa reglementărilor <span class="optional">OPȚIONAL</span></label>
+                <input class="text-input" id="rule-source" placeholder="ex. Certificat de urbanism nr. ...">
+                <div class="note-strip compact"><span class="note-symbol">i</span><span>Aceste valori nu sunt verificate automat față de PUG/PUZ sau legislație.</span></div>
+              </div>
+              <div class="form-card small-card">
+                <div class="card-heading"><div class="icon-box">◫</div><div><h2>Baza calculelor</h2><p>Aria de referință pentru indicatori.</p></div></div>
+                <div class="reference-area" id="reference-area-display">— m²</div>
+                <p class="helper-text">Se folosește suprafața de referință introdusă în etapa Teren sau aria estimată a conturului.</p>
+                <div class="status-note">Rezultatele sunt estimări de concept, nu certificare de conformitate.</div>
+              </div>
+            </div>
+            <div class="step-footer"><button class="button button-quiet previous-step" data-prev="site">← Înapoi</button><button class="button button-dark next-step" data-next="variants">Configurează variantele <span>→</span></button></div>
+          </section>
+
+          <section class="step-panel" data-panel="variants">
+            <div class="page-heading">
+              <div><div class="eyebrow">ETAPA 04 · STUDIU DE VOLUMETRIE</div><h1>Explorează variantele.</h1><p>Definește nivelurile și compară amprenta cu indicatorii introduși.</p></div>
+              <div class="heading-index">04 <span>/ 04</span></div>
+            </div>
+            <div class="variants-layout">
+              <div class="variant-list-card">
+                <div class="variant-list-heading"><div><h2>Variante de studiu</h2><p id="variant-count">0 propuneri</p></div><button id="add-variant" class="button button-draw">＋ Adaugă variantă</button></div>
+                <div id="variant-list" class="variant-list"></div>
+              </div>
+              <div class="variant-detail">
+                <div class="viewer-card">
+                  <div class="viewer-heading"><div><span class="eyebrow">VOLUMETRIE PE TEREN</span><h2 id="viewer-title">Selectează o variantă</h2></div><div class="viewer-actions"><div class="view-switch" role="group" aria-label="Mod de vizualizare"><button id="view-2d" type="button" aria-pressed="false">2D</button><button id="view-3d" type="button" aria-pressed="true">3D</button></div><span class="viewer-badge" id="viewer-badge">MODEL PE TEREN</span></div></div>
+                  <div id="volume-view" class="volume-view"><div class="empty-view">Adaugă o variantă pentru a vedea volumul.</div></div>
+                  <div class="viewer-caption"><span id="viewer-placement">Amplasare automată după retrageri</span><span id="viewer-dimensions">—</span></div>
+                </div>
+                <div class="metrics-card">
+                  <div class="metrics-title"><div><h2>Comparație indicatori</h2><p>Estimări calculate din datele introduse.</p></div><button class="text-button" id="print-report">Imprimă raport ↗</button></div>
+                  <div class="table-scroll"><table class="metrics-table"><thead><tr><th>VARIANTĂ</th><th>REGIM</th><th>AMPRENTĂ</th><th>POT</th><th>CUT</th><th>ÎNĂLȚIME</th><th>STARE</th></tr></thead><tbody id="metrics-rows"></tbody></table></div>
+                  <p class="disclaimer">Estimare de concept pe baza datelor introduse. Nu reprezintă verificare cadastrală sau certificare de conformitate urbanistică.</p>
+                </div>
+              </div>
+            </div>
+            <div class="step-footer"><button class="button button-quiet previous-step" data-prev="rules">← Înapoi</button><span class="quiet-note">Modificările se salvează local în browser.</span></div>
+          </section>
+        </div>
+      </main>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <footer class="map-attribution-note">Hartă: © OpenStreetMap contributors · Datele proiectului sunt păstrate local.</footer>
+  </body>
+</html>
